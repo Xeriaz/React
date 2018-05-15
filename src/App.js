@@ -1,74 +1,48 @@
 import React, { Component } from 'react';
 import logo from './logo.svg';
+import { connect } from 'react-redux';
 import './App.css';
 import Movie from './Movie';
-
-const API_KEY = '969a0dc3';
-
-let bookmarks = localStorage.getItem('bookmarks');
-bookmarks = bookmarks ? JSON.parse(bookmarks) : [];
+import {onSearch, onBookmark} from "./actions";
 
 class MyApp extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            input: '',
-            movie: {},
-            bookmarks: bookmarks,
-        }
-    }
-
-    onSearch = (e) => {
-      this.setState({input: e.target.value});
-
-      this.onRequest();
-    };
-
-    onRequest = (title = '') => {
-        fetch(`http://www.omdbapi.com/?apikey=${API_KEY}&t=${this.state.input}`)
-            .then(res => res.json())
-            .then(json => this.setState({movie: json}));
-    };
-
-    onBookmark = () => {
-      // get movie
-      // get bookmarks
-        const { movie, bookmarks } = this.state;
-      // push bookmark
-        const newBookmark = [...bookmarks];
-        newBookmark.push(movie);
-
-        this.setState({bookmarks: newBookmark});
-        localStorage.setItem('bookmarks', JSON.stringify(newBookmark));
-      //  save local storage
-    };
 
     render() {
+        const { input, movie, bookmarks, onSearch, onBookmark } = this.props;
         return (
             <div className="container">
-                <input
-                    className="form-control"
-                    type="text"
-                    value={this.state.input}
-                    onChange={this.onSearch}
-                />
-                {this.state.movie.Title && <Movie {...this.state.movie}
-                                                  onBookmark = {this.onBookmark.bind(this)} />}
+                <input className="form-control" type="text" value={input} onChange={onSearch} />
+
+                {movie.Title && <Movie {...movie} onBookmark={onBookmark} />}
 
                 <h4>Bookmarks</h4>
 
                 <div className="row">
-                    {this.state.bookmarks.map((bookmark) => (
+                    {bookmarks.map((bookmark) => (
                         <div className="col-3">
                             <Movie {...bookmark} />
                         </div>
                     ))}
-
                 </div>
-
             </div>
         )
     }
 }
 
-export default MyApp;
+function mapDispatchToProps(dispatch) {
+    return {
+        onSearch: (e) => dispatch(onSearch(e)),
+        onBookmark: () => dispatch(onBookmark()),
+    }
+}
+
+function mapStateToProps(state) {
+    return {
+        input: state.input || '',
+        api_key: state.api_key,
+        movie: state.movie || {},
+        bookmarks: state.bookmarks || []
+    }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(MyApp);
